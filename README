@@ -6,7 +6,7 @@ This fork exists because I wanted to set some GC parameters (just like REE). Now
 - RUBY_HEAP_SLOTS_GROWTH_FACTOR
 - RUBY_HEAP_FREE_MIN
 
-For more information on how to do this, have a look at snaprails.tumblr.com/post/241746095/rubys-gc-configuration
+For more information on how to do this, have a look at http://snaprails.tumblr.com/post/241746095/rubys-gc-configuration
 
 Notice that I didn't implement RUBY_HEAP_MIN_SLOTS, it doesn't make sense in Ruby 1.9's GC implementation.
 
