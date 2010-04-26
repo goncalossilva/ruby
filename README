@@ -10,6 +10,8 @@ For more information on how to do this, have a look at http://snaprails.tumblr.c
 
 Notice that I didn't implement RUBY_HEAP_MIN_SLOTS, it doesn't make sense in Ruby 1.9's GC implementation.
 
+This implementation is based on v1_9_1_378. If you would like to use another, please use an issue.
+
 * What's Ruby
 
 Ruby is the interpreted scripting language for quick and
