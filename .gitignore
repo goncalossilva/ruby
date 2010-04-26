@@ -40,7 +40,7 @@
 /config.log
 /config.status
 /config.status.lineno
-/configure
+#/configure
 /enc.mk
 /enc/trans/*.c
 /encdb.h
