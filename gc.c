@@ -283,7 +283,6 @@ struct heaps_slot {
 };
 
 #define HEAP_MIN_SLOTS 10000
-#define FREE_MIN  4096
 
 struct gc_list {
     VALUE *varptr;
@@ -306,6 +305,8 @@ typedef struct rb_objspace {
 	struct heaps_slot *ptr;
 	size_t length;
 	size_t used;
+	double growth_factor;
+	size_t free_min;
 	RVALUE *freelist;
 	RVALUE *range[2];
 	RVALUE *freed;
@@ -1716,9 +1717,9 @@ gc_sweep(rb_objspace_t *objspace)
     do_heap_free = (heaps_used * HEAP_OBJ_LIMIT) * 0.65;
     free_min = (heaps_used * HEAP_OBJ_LIMIT)  * 0.2;
 
-    if (free_min < FREE_MIN) {
+    if (free_min < objspace->heap.free_min) {
 	do_heap_free = heaps_used * HEAP_OBJ_LIMIT;
-        free_min = FREE_MIN;
+        free_min = objspace->heap.free_min;
     }
 
     freelist = 0;
