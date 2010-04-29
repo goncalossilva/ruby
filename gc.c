@@ -74,9 +74,10 @@ void *alloca ();
 # endif /* HAVE_ALLOCA_H */
 #endif /* __GNUC__ */
 
-#ifndef GC_MALLOC_LIMIT
+/*#ifndef GC_MALLOC_LIMIT
 #define GC_MALLOC_LIMIT 8000000
-#endif
+#endif*/
+static int GC_MALLOC_LIMIT = 8000000;
 
 #define nomem_error GET_VM()->special_exceptions[ruby_error_nomemory]
 
@@ -282,7 +283,7 @@ struct heaps_slot {
     int limit;
 };
 
-#define HEAP_MIN_SLOTS 10000
+static int HEAP_MIN_SLOTS = 10000;
 
 struct gc_list {
     VALUE *varptr;
@@ -341,7 +342,7 @@ typedef struct rb_objspace {
 static int ruby_initial_gc_stress = 0;
 int *ruby_initial_gc_stress_ptr = &ruby_initial_gc_stress;
 #else
-static rb_objspace_t rb_objspace = {{GC_MALLOC_LIMIT}, {HEAP_MIN_SLOTS}};
+static rb_objspace_t rb_objspace;// = {{GC_MALLOC_LIMIT}, {HEAP_MIN_SLOTS}};
 int *ruby_initial_gc_stress_ptr = &rb_objspace.gc_stress;
 #endif
 #define malloc_limit		objspace->malloc_params.limit
@@ -922,6 +923,21 @@ init_heap(rb_objspace_t *objspace)
 {
     size_t add, i;
 
+    if(getenv("RUBY_GC_MALLOC_LIMIT") != NULL)
+      GC_MALLOC_LIMIT = atoi(getenv("RUBY_GC_MALLOC_LIMIT"));
+
+    if(getenv("RUBY_HEAP_MIN_SLOTS") != NULL)
+      HEAP_MIN_SLOTS = atoi(getenv("RUBY_HEAP_MIN_SLOTS"));
+      
+    if(getenv("RUBY_HEAP_SLOTS_INCREMENT") != NULL)
+      objspace->malloc_params.increase = atoi(getenv("RUBY_HEAP_SLOTS_INCREMENT"));
+      
+    if(getenv("RUBY_HEAP_SLOTS_GROWTH_FACTOR") != NULL)
+      objspace->heap.growth_factor = atof(getenv("RUBY_HEAP_SLOTS_GROWTH_FACTOR"));
+      
+    if(getenv("RUBY_HEAP_FREE_MIN") != NULL)
+      objspace->heap.free_min = atoi(getenv("RUBY_HEAP_FREE_MIN"));
+
     add = HEAP_MIN_SLOTS / HEAP_OBJ_LIMIT;
 
     if ((heaps_used + add) > heaps_length) {
@@ -939,7 +955,7 @@ init_heap(rb_objspace_t *objspace)
 static void
 set_heaps_increment(rb_objspace_t *objspace)
 {
-    size_t next_heaps_length = heaps_used * 1.8;
+    size_t next_heaps_length = heaps_used * objspace->heap.growth_factor;
     heaps_inc = next_heaps_length - heaps_used;
 
     if (next_heaps_length > heaps_length) {
