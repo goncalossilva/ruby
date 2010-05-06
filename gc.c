@@ -20,6 +20,7 @@
 #include "vm_core.h"
 #include "gc.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <setjmp.h>
 #include <sys/types.h>
 
@@ -342,7 +343,7 @@ typedef struct rb_objspace {
 static int ruby_initial_gc_stress = 0;
 int *ruby_initial_gc_stress_ptr = &ruby_initial_gc_stress;
 #else
-static rb_objspace_t rb_objspace;// = {{GC_MALLOC_LIMIT}, {HEAP_MIN_SLOTS}};
+static rb_objspace_t rb_objspace = {{8000000}, {10000}};
 int *ruby_initial_gc_stress_ptr = &rb_objspace.gc_stress;
 #endif
 #define malloc_limit		objspace->malloc_params.limit
@@ -922,21 +923,6 @@ static void
 init_heap(rb_objspace_t *objspace)
 {
     size_t add, i;
-
-    if(getenv("RUBY_GC_MALLOC_LIMIT") != NULL)
-      GC_MALLOC_LIMIT = atoi(getenv("RUBY_GC_MALLOC_LIMIT"));
-
-    if(getenv("RUBY_HEAP_MIN_SLOTS") != NULL)
-      HEAP_MIN_SLOTS = atoi(getenv("RUBY_HEAP_MIN_SLOTS"));
-      
-    if(getenv("RUBY_HEAP_SLOTS_INCREMENT") != NULL)
-      objspace->malloc_params.increase = atoi(getenv("RUBY_HEAP_SLOTS_INCREMENT"));
-      
-    if(getenv("RUBY_HEAP_SLOTS_GROWTH_FACTOR") != NULL)
-      objspace->heap.growth_factor = atof(getenv("RUBY_HEAP_SLOTS_GROWTH_FACTOR"));
-      
-    if(getenv("RUBY_HEAP_FREE_MIN") != NULL)
-      objspace->heap.free_min = atoi(getenv("RUBY_HEAP_FREE_MIN"));
 
     add = HEAP_MIN_SLOTS / HEAP_OBJ_LIMIT;
 
@@ -2939,4 +2925,22 @@ Init_GC(void)
     rb_define_singleton_method(rb_mGC, "malloc_allocated_size", gc_malloc_allocated_size, 0);
     rb_define_singleton_method(rb_mGC, "malloc_allocations", gc_malloc_allocations, 0);
 #endif
+
+    if(getenv("RUBY_GC_MALLOC_LIMIT") != NULL)
+      GC_MALLOC_LIMIT = atoi(getenv("RUBY_GC_MALLOC_LIMIT"));
+    (&rb_objspace)->malloc_params.limit = GC_MALLOC_LIMIT;
+
+    if(getenv("RUBY_HEAP_MIN_SLOTS") != NULL)
+      HEAP_MIN_SLOTS = atoi(getenv("RUBY_HEAP_MIN_SLOTS"));
+      
+    if(getenv("RUBY_HEAP_SLOTS_INCREMENT") != NULL)
+      (&rb_objspace)->malloc_params.increase = atof(getenv("RUBY_HEAP_SLOTS_INCREMENT"));
+      
+    (&rb_objspace)->heap.growth_factor = 1.8;
+    if(getenv("RUBY_HEAP_SLOTS_GROWTH_FACTOR") != NULL) // can't be 1, 2, 1.0, 2.0, etc
+      (&rb_objspace)->heap.growth_factor = atof(getenv("RUBY_HEAP_SLOTS_GROWTH_FACTOR"));
+    }
+      
+    if(getenv("RUBY_HEAP_FREE_MIN") != NULL)
+      (&rb_objspace)->heap.free_min = atoi(getenv("RUBY_HEAP_FREE_MIN"));
 }
